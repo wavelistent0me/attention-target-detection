@@ -1,4 +1,5 @@
 import argparse, os
+import sys
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -37,6 +38,7 @@ def _get_transform():
 
 
 def run():
+    # 获取头像框的坐标
     column_names = ['frame', 'left', 'top', 'right', 'bottom']
     df = pd.read_csv(args.head, names=column_names, index_col=0)
     df['left'] -= (df['right']-df['left'])*0.1
@@ -47,8 +49,15 @@ def run():
     # set up data transformation
     test_transforms = _get_transform()
 
+    # step:加载模型
+    # new 一个模型
     model = ModelSpatial()
     model_dict = model.state_dict()
+    print("model_dict")
+    print(model_dict)
+
+    sys.exit()
+
     pretrained_dict = torch.load(args.model_weights)
     pretrained_dict = pretrained_dict['model']
     model_dict.update(pretrained_dict)
