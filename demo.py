@@ -49,22 +49,20 @@ def run():
     # set up data transformation
     test_transforms = _get_transform()
 
-    # step:加载模型
-    # new 一个模型
+    # 加载模型
     model = ModelSpatial()
     model_dict = model.state_dict()
-    print("model_dict")
-    print(model_dict)
-
-    sys.exit()
-
     pretrained_dict = torch.load(args.model_weights)
     pretrained_dict = pretrained_dict['model']
     model_dict.update(pretrained_dict)
     model.load_state_dict(model_dict)
+    # 因为保存参数更加复杂，所以这里赋值参数就更加复杂了
 
-    model.cuda()
-    model.train(False)
+    # model.cuda()
+    # model.train(False)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model.to(device)
+    model.eval()
 
     with torch.no_grad():
         for i in df.index:
