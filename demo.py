@@ -24,7 +24,10 @@ parser.add_argument('--vis_mode', type=str, help='heatmap or arrow', default='he
 parser.add_argument('--out_threshold', type=int, help='out-of-frame target dicision threshold', default=100)
 args = parser.parse_args()
 
-
+# 图像转张量方法
+# 统一图像尺寸（调整为 input_resolution × input_resolution）
+# 转换为张量格式
+# 图像标准化（归一化）
 def _get_transform():
     transform_list = []
     transform_list.append(transforms.Resize((input_resolution, input_resolution)))

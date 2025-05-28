@@ -1,7 +1,11 @@
 import cv2
 
+print(cv2.__version__)
+print(cv2.__file__)
+print(hasattr(cv2, 'data'))
+
 # 加载人脸识别的 Haar 模型
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+face_cascade = cv2.CascadeClassifier("C:/MineApp/MyProgram/attention-target-detection/haarcascade_frontalface_alt2.xml")
 
 # 打开摄像头（0 代表默认摄像头）
 cap = cv2.VideoCapture(0)
