@@ -71,11 +71,17 @@ def run():
             width, height = frame_raw.size
 
             head_box = [df.loc[i,'left'], df.loc[i,'top'], df.loc[i,'right'], df.loc[i,'bottom']]
+            print("head_box")
+            print(head_box)
 
             head = frame_raw.crop((head_box)) # head crop
 
             head = test_transforms(head) # transform inputs
             frame = test_transforms(frame_raw)
+            
+            print("frame")
+            print(frame)
+
             head_channel = imutils.get_head_box_channel(head_box[0], head_box[1], head_box[2], head_box[3], width, height,
                                                         resolution=input_resolution).unsqueeze(0)
 
@@ -95,6 +101,9 @@ def run():
             im_resized = Image.fromarray(raw_hm).resize((width, height), Image.BILINEAR)
             norm_map = np.array(im_resized) - inout
             # norm_map = imresize(raw_hm, (height, width)) - inout
+
+            print("norm_map")
+            print(norm_map)
 
             # vis
             plt.close()
@@ -118,7 +127,7 @@ def run():
                 plt.imshow(norm_map, cmap = 'jet', alpha=0.2, vmin=0, vmax=255)
 
             plt.show(block=False)
-            plt.pause(0.2)
+            plt.pause(100)
 
         print('DONE!')
 
