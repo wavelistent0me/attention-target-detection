@@ -8,6 +8,7 @@ from utils import imutils
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
+import time
 
 # 图像转张量方法
 # 统一图像尺寸（调整为 input_resolution × input_resolution）
@@ -38,14 +39,22 @@ model.eval()
 face_cascade = cv2.CascadeClassifier("C:/MineApp/MyProgram/attention-target-detection/haarcascade_frontalface_alt2.xml")
 cap=cv2.VideoCapture(1)
 
+width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+fps = 30
+out = cv2.VideoWriter('output_video.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 30, (width, height))
+frame_time = 1.0 / fps
+
 with torch.no_grad():
     while True:
+            start = time.time()
+            
             ret,frame=cap.read()
             if not ret:
                 break
 
             # 测试用,加载一张图片
-            frame=cv2.imread("C:/MineApp/MyProgram/attention-target-detection/data/demo/frames/00002575.jpg")
+            # frame=cv2.imread("C:/MineApp/MyProgram/attention-target-detection/data/demo/frames/00002575.jpg")
 
             frame_raw=frame.copy()
 
@@ -114,6 +123,17 @@ with torch.no_grad():
                 # 热力图数据由黑白转为jet色图
                 heatmap = cv2.applyColorMap(norm_map, cv2.COLORMAP_JET)
                 overlay = cv2.addWeighted(frame_raw, 0.8, heatmap, 0.4, 0)
-                cv2.imshow("frame",overlay)
-                # cv2显示视频流必须加这个,不然就是黑块
-                cv2.waitKey(1)
+                # 头部框
+                # cv2.rectangle(overlay, (x,y), (x+w,x+h), color=(0, 255, 0), thickness=2)
+                cv2.imshow("frame",overlay)                
+                out.write(overlay)
+                elapsed = time.time() - start
+                wait = max(0, frame_time - elapsed)
+                time.sleep(wait)
+
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+                
+cap.release()
+out.release()
+cv2.destroyAllWindows()
