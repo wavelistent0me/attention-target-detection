@@ -36,25 +36,11 @@ model.eval()
 
 # 加载人脸识别Haar模型
 face_cascade = cv2.CascadeClassifier("C:/MineApp/MyProgram/attention-target-detection/haarcascade_frontalface_alt2.xml")
-cap=cv2.VideoCapture(0)
-
-paused = False
-
-while True:
-    frame=cv2.imread("C:/MineApp/MyProgram/attention-target-detection/data/demo/frames/00002575.jpg")
-    frame_raw=frame.copy()
-    cv2.imshow("frame",frame)
+cap=cv2.VideoCapture(1)
 
 with torch.no_grad():
-    while False:
-        if not paused:
-            # 加个Index
-            frame_index = 0
-
+    while True:
             ret,frame=cap.read()
-            print("ret")
-            print(ret)
-            
             if not ret:
                 break
 
@@ -82,8 +68,6 @@ with torch.no_grad():
             head_box=[x, y, x+w, y+h]
             # 标准数据
             # head_box=[533.1, 50.599999999999994, 773.89, 297.44]
-            print("head_box")
-            print(head_box)
 
             # 裁剪出头部的位置
             head = frame[y:y+h, x:x+w]
@@ -91,19 +75,9 @@ with torch.no_grad():
             head=test_transforms(head)
             frame=test_transforms(frame_rgb)
 
-            print("frame")
-            print(frame)
-
-            # plt.imshow(frame_rgb)
-            # plt.show()
-            # plt.pause(100)
-
             # 将头部框编码成一个与输入图像大小一致的 mask，表示“头的位置”。不知道什么意思
             head_channel = imutils.get_head_box_channel(head_box[0], head_box[1], head_box[2], head_box[3], width, height,
                                                             resolution=input_resolution).unsqueeze(0)
-            print("head_channel")
-            print(head_channel)
-
             head = head.unsqueeze(0).cuda()
             frame = frame.unsqueeze(0).cuda()
             head_channel = head_channel.unsqueeze(0).cuda()
@@ -111,7 +85,7 @@ with torch.no_grad():
             # 推理,也就是前向传播
             raw_hm, _, inout = model(frame, head_channel, head)
 
-            if True:
+            if False:
                     raw_hm = raw_hm.cpu().detach().numpy() * 255
                     raw_hm = raw_hm.squeeze()
                     inout = inout.cpu().detach().numpy()
@@ -123,16 +97,23 @@ with torch.no_grad():
                     fig = plt.figure()
                     fig.canvas.manager.window.move(0,0)
                     plt.axis('off')
-                    plt.imshow(frame_rgb)
-                    plt.imshow(norm_map, cmap = 'jet', alpha=0.2, vmin=0, vmax=255)
+                    plt.imshow(norm_map)
+                    # plt.imshow(norm_map, cmap = 'jet', alpha=0.2, vmin=0, vmax=255)
                     plt.show(block=False)
                     plt.pause(100)
-                    
             else:
-                cv2.imshow("frame",frame_raw)
-
-
-            frame_index+=1
-
-cap.release()
-cv2.destroyAllWindows()
+                raw_hm = raw_hm.cpu().detach().numpy() * 255
+                raw_hm = raw_hm.squeeze()
+                inout = inout.cpu().detach().numpy()
+                inout = 1 / (1 + np.exp(-inout))
+                inout = (1 - inout) * 255
+                im_resized = Image.fromarray(raw_hm).resize((width, height), Image.BILINEAR)
+                norm_map = np.array(im_resized) - inout
+                
+                norm_map = np.clip(norm_map, 0, 255).astype(np.uint8)
+                # 热力图数据由黑白转为jet色图
+                heatmap = cv2.applyColorMap(norm_map, cv2.COLORMAP_JET)
+                overlay = cv2.addWeighted(frame_raw, 0.8, heatmap, 0.4, 0)
+                cv2.imshow("frame",overlay)
+                # cv2显示视频流必须加这个,不然就是黑块
+                cv2.waitKey(1)
