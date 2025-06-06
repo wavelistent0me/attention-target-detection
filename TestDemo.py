@@ -4,7 +4,7 @@ import cv2
 from torchvision import transforms
 # 配置文件,定义了一些变量
 from config import *
-from utils import imutils
+from utils import imutils,evaluation
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -123,10 +123,24 @@ with torch.no_grad():
                 # 热力图数据由黑白转为jet色图
                 heatmap = cv2.applyColorMap(norm_map, cv2.COLORMAP_JET)
                 overlay = cv2.addWeighted(frame_raw, 0.8, heatmap, 0.4, 0)
-                # 头部框
-                # cv2.rectangle(overlay, (x,y), (x+w,x+h), color=(0, 255, 0), thickness=2)
+                if inout < 100:
+                    # 头部框
+                    cv2.rectangle(overlay, (x,y), (x+w,y+h), color=(0, 255, 0), thickness=2)
+                    # 连接线
+                    # evaluation计算热图中心点的方法
+                    pred_x, pred_y = evaluation.argmax_pts(raw_hm)
+                    norm_p = [pred_x / output_resolution, pred_y / output_resolution]
+                    cv2.circle(
+                        overlay,  # 图像
+                        (int(norm_p[0] * width), int(norm_p[1] * height)),  # 圆心
+                        radius=int(height / 50.0),  # 半径
+                        color=(0, 255, 0),  # 绿色（BGR）
+                        thickness=-1  # 填充圆
+                    )
+                    cv2.line(overlay, (int(norm_p[0] * width), int(norm_p[1] * height)), (int((head_box[0] + head_box[2]) / 2), int((head_box[1] + head_box[3]) / 2)), color=(0, 255, 0), thickness=2)
                 cv2.imshow("frame",overlay)                
-                out.write(overlay)
+                # out.write(overlay)
+
                 elapsed = time.time() - start
                 wait = max(0, frame_time - elapsed)
                 time.sleep(wait)
